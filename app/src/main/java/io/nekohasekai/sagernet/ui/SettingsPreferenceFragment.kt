@@ -64,6 +64,7 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
         val mixedPort = findPreference<EditTextPreference>(Key.MIXED_PORT)!!
         val mixedUsername = findPreference<EditTextPreference>(Key.MIXED_USERNAME)!!
         val mixedPassword = findPreference<EditTextPreference>(Key.MIXED_PASSWORD)!!
+        val disableMixed = findPreference<SwitchPreference>(Key.DISABLE_MIXED)!!
         val serviceMode = findPreference<Preference>(Key.SERVICE_MODE)!!
         val allowAccess = findPreference<Preference>(Key.ALLOW_ACCESS)!!
         val appendHttpProxy = findPreference<SwitchPreference>(Key.APPEND_HTTP_PROXY)!!
@@ -150,9 +151,30 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
             true
         }
 
+        val mixedPrefsToToggle = listOf(
+            findPreference<Preference>("mixedPort"),
+            findPreference<Preference>("mixedUsername"),
+            findPreference<Preference>("mixedPassword"),
+            findPreference<Preference>("appendHttpProxy"),
+            findPreference<Preference>("allowAccess")
+        )
+
+        fun updateMixedPrefsState(disabled: Boolean) {
+            mixedPrefsToToggle.forEach { it?.isEnabled = !disabled }
+        }
+
+        updateMixedPrefsState(disableMixed?.isChecked == true)
+
+        disableMixed?.setOnPreferenceChangeListener { _, newValue ->
+            updateMixedPrefsState(newValue as Boolean)
+            needReload()
+            true
+        }
+
         mixedPort.onPreferenceChangeListener = reloadListener
         mixedUsername.onPreferenceChangeListener = reloadListener
         mixedPassword.onPreferenceChangeListener = reloadListener
+        //disableMixed.onPreferenceChangeListener = reloadListener
         appendHttpProxy.onPreferenceChangeListener = reloadListener
         showDirectSpeed.onPreferenceChangeListener = reloadListener
         trafficSniffing.onPreferenceChangeListener = reloadListener

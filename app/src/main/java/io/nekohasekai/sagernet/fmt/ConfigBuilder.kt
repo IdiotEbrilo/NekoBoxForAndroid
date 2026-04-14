@@ -224,21 +224,23 @@ fun buildConfig(
                     }
                 }
             })
-            inbounds.add(Inbound_MixedOptions().apply {
-                type = "mixed"
-                tag = TAG_MIXED
-                listen = bind
-                listen_port = DataStore.mixedPort
-                domain_strategy = genDomainStrategy(DataStore.resolveDestination)
-                sniff = needSniff
-                sniff_override_destination = needSniffOverride
-                users = listOf(
-                    User().apply {
-                        username = DataStore.mixedUsername
-                        password = DataStore.mixedPassword
-                    },
-                )
-            })
+            if (!DataStore.disableMixed) {
+                inbounds.add(Inbound_MixedOptions().apply {
+                    type = "mixed"
+                    tag = TAG_MIXED
+                    listen = bind
+                    listen_port = DataStore.mixedPort
+                    domain_strategy = genDomainStrategy(DataStore.resolveDestination)
+                    sniff = needSniff
+                    sniff_override_destination = needSniffOverride
+                    users = listOf(
+                        User().apply {
+                            username = DataStore.mixedUsername
+                            password = DataStore.mixedPassword
+                        },
+                    )
+                })
+            }
         }
 
         outbounds = mutableListOf()

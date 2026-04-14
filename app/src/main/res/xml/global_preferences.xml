@@ -214,6 +214,11 @@
             app:key="allowAccess"
             app:summary="@string/allow_access_sum"
             app:title="@string/allow_access" />
+        <SwitchPreference
+            app:defaultValue="false"
+            app:key="disableMixed"
+            app:summary="@string/disable_mixed_sum"
+            app:title="@string/disable_mixed" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/cag_misc">
