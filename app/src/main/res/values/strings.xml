@@ -58,6 +58,8 @@
     <string name="cag_route">Route Settings</string>
     <string name="allow_access">Allow Connections from the LAN</string>
     <string name="allow_access_sum">Bind inbound servers to 0.0.0.0</string>
+    <string name="proxy_username">Proxy Username</string>
+    <string name="proxy_password">Proxy Password</string>
     <string name="disable_mixed">Disable SOCKS5 proxy</string>
     <string name="disable_mixed_sum">SOCKS5 proxy can be disabled to prevent VPN server external IP leak</string>
     <string name="inbound_settings">Inbound Settings</string>

@@ -197,13 +197,13 @@
         <EditTextPreference
             app:defaultValue="User"
             app:key="mixedUsername"
-            app:title="Proxy Username"
-            app:useSimpleSummaryProvider="true" />
+            app:useSimpleSummaryProvider="true"
+            app:title="@string/proxy_username" />
         <EditTextPreference
             app:icon="@drawable/ic_settings_password"
             app:key="mixedPassword"
-            app:title="Proxy Password"
-            app:useSimpleSummaryProvider="true" />
+            app:useSimpleSummaryProvider="true"
+            app:title="@string/proxy_password" />
         <SwitchPreference
             app:defaultValue="false"
             app:key="appendHttpProxy"
