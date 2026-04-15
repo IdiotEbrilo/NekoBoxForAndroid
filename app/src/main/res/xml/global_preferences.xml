@@ -192,8 +192,8 @@
         <SwitchPreference
             app:defaultValue="true"
             app:key="enableMixed"
-            app:summary="@string/ENABLE_MIXED_sum"
-            app:title="@string/ENABLE_MIXED" />
+            app:summary="@string/enable_mixed_sum"
+            app:title="@string/enable_mixed" />
         <EditTextPreference
             app:icon="@drawable/ic_maps_directions_boat"
             app:key="mixedPort"
