@@ -189,6 +189,11 @@
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/inbound_settings">
+        <SwitchPreference
+            app:defaultValue="true"
+            app:key="enableMixed"
+            app:summary="@string/ENABLE_MIXED_sum"
+            app:title="@string/ENABLE_MIXED" />
         <EditTextPreference
             app:icon="@drawable/ic_maps_directions_boat"
             app:key="mixedPort"
@@ -214,11 +219,6 @@
             app:key="allowAccess"
             app:summary="@string/allow_access_sum"
             app:title="@string/allow_access" />
-        <SwitchPreference
-            app:defaultValue="false"
-            app:key="disableMixed"
-            app:summary="@string/disable_mixed_sum"
-            app:title="@string/disable_mixed" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/cag_misc">
