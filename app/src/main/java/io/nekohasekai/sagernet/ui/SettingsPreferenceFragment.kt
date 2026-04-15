@@ -159,8 +159,8 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
             findPreference<Preference>("allowAccess")
         )
 
-        fun updateMixedPrefsState(disabled: Boolean) {
-            mixedPrefsToToggle.forEach { it?.isEnabled = !disabled }
+        fun updateMixedPrefsState(enabled: Boolean) {
+            mixedPrefsToToggle.forEach { it?.isEnabled = enabled }
         }
 
         updateMixedPrefsState(enableMixed?.isChecked == true)
