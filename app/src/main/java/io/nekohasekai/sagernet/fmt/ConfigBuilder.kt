@@ -227,7 +227,7 @@ fun buildConfig(
                     }
                 }
             })
-            if (!DataStore.disableMixed) {
+            if (!DataStore.enableMixed) {
                 inbounds.add(Inbound_MixedOptions().apply {
                     type = "mixed"
                     tag = TAG_MIXED

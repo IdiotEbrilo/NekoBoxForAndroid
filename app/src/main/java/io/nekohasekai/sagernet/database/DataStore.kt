@@ -142,7 +142,7 @@ object DataStore : OnPreferenceDataStoreChangeListener {
         }
     }
 
-    var disableMixed by configurationStore.boolean(Key.DISABLE_MIXED)
+    var enableMixed by configurationStore.boolean(Key.ENABLE_MIXED)
 
     private fun getLocalPort(key: String, default: Int): Int {
         return parsePort(configurationStore.getString(key), default + userIndex)

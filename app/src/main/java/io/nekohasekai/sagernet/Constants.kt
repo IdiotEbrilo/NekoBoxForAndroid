@@ -40,7 +40,7 @@ object Key {
     const val MIXED_USERNAME = "mixedUsername"
     const val MIXED_PASSWORD = "mixedPassword"
     const val ALLOW_ACCESS = "allowAccess"
-    const val DISABLE_MIXED = "disableMixed"
+    const val ENABLE_MIXED = "enableMixed"
     const val SPEED_INTERVAL = "speedInterval"
     const val SHOW_DIRECT_SPEED = "showDirectSpeed"
 
