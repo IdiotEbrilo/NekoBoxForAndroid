@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.SwitchPreference
 import io.nekohasekai.sagernet.Key
 import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.database.preference.EditTextPreferenceModifiers
@@ -51,6 +52,20 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
     private val muxPadding = pbm.add(PreferenceBinding(Type.Bool, "muxPadding"))
     private val muxType = pbm.add(PreferenceBinding(Type.TextToInt, "muxType"))
     private val muxConcurrency = pbm.add(PreferenceBinding(Type.TextToInt, "muxConcurrency"))
+    private val muxMode = pbm.add(PreferenceBinding(Type.TextToInt, "muxMode"))
+    private val muxMaxConnections = pbm.add(PreferenceBinding(Type.TextToInt, "muxMaxConnections"))
+    private val muxMinStreams = pbm.add(PreferenceBinding(Type.TextToInt, "muxMinStreams"))
+    private val muxBrutal = pbm.add(PreferenceBinding(Type.Bool, "muxBrutal"))
+    private val muxBrutalUpMbps = pbm.add(PreferenceBinding(Type.TextToInt, "muxBrutalUpMbps"))
+    private val muxBrutalDownMbps = pbm.add(PreferenceBinding(Type.TextToInt, "muxBrutalDownMbps"))
+
+    private val xhttpMode = pbm.add(PreferenceBinding(Type.Text, "xhttpMode"))
+    private val xhttpExtra = pbm.add(PreferenceBinding(Type.Text, "xhttpExtra"))
+    private val vlessEncryption = pbm.add(PreferenceBinding(Type.Text, "vlessEncryption"))
+
+    // KCP
+    private val mKcpSeed = pbm.add(PreferenceBinding(Type.Text, "mKcpSeed"))
+    private val headerType = pbm.add(PreferenceBinding(Type.Text, "headerType"))
 
     override fun StandardV2RayBean.init() {
         if (this is TrojanBean) {
@@ -69,6 +84,7 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
     private lateinit var securityCategory: PreferenceCategory
     private lateinit var tlsCamouflageCategory: PreferenceCategory
     private lateinit var wsCategory: PreferenceCategory
+    private lateinit var xhttpCategory: PreferenceCategory
     private lateinit var echCategory: PreferenceCategory
 
     override fun PreferenceFragmentCompat.createPreferences(
@@ -81,6 +97,7 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
         tlsCamouflageCategory = findPreference(Key.SERVER_TLS_CAMOUFLAGE_CATEGORY)!!
         echCategory = findPreference(Key.SERVER_ECH_CATEORY)!!
         wsCategory = findPreference(Key.SERVER_WS_CATEGORY)!!
+        xhttpCategory = findPreference("serverXhttpCategory")!!
 
 
         // vmess/vless/http/trojan
@@ -105,6 +122,7 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
         packetEncoding.preference.isVisible = isVmess || isVless
         alterId.preference.isVisible = isVmess
         encryption.preference.isVisible = isVmess || isVless
+        vlessEncryption.preference.isVisible = isVless
         username.preference.isVisible = isHttp
         password.preference.isVisible = isHttp
 
@@ -144,17 +162,58 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
                 true
             }
         }
+
+        // Mux mode visibility control
+        muxMode.preference.apply {
+            updateMuxMode(muxMode.readIntFromCache())
+            this as SimpleMenuPreference
+            setOnPreferenceChangeListener { _, newValue ->
+                updateMuxMode((newValue as String).toInt())
+                true
+            }
+        }
+
+        muxBrutal.preference.apply {
+            updateMuxBrutal(muxBrutal.readBoolFromCache())
+            this as SwitchPreference
+            setOnPreferenceChangeListener { _, newValue ->
+                updateMuxBrutal(newValue as Boolean)
+                true
+            }
+        }
+    }
+
+    private fun updateMuxBrutal(enabled: Boolean) {
+        muxBrutalUpMbps.preference.isVisible = enabled
+        muxBrutalDownMbps.preference.isVisible = enabled
+    }
+
+    private fun updateMuxMode(mode: Int) {
+        // mode 0: max_streams mode - show muxConcurrency, hide muxMaxConnections/muxMinStreams
+        // mode 1: connections mode - hide muxConcurrency, show muxMaxConnections/muxMinStreams
+        val isMaxStreamsMode = mode == 0
+        muxConcurrency.preference.isVisible = isMaxStreamsMode
+        muxMaxConnections.preference.isVisible = !isMaxStreamsMode
+        muxMinStreams.preference.isVisible = !isMaxStreamsMode
     }
 
     private fun updateView(network: String) {
         host.preference.isVisible = false
         path.preference.isVisible = false
+        mKcpSeed.preference.isVisible = false
+        headerType.preference.isVisible = false
         wsCategory.isVisible = false
+        xhttpCategory.isVisible = false
 
         when (network) {
             "tcp" -> {
                 host.preference.setTitle(R.string.http_host)
                 path.preference.setTitle(R.string.http_path)
+            }
+
+            "kcp" -> {
+                mKcpSeed.preference.isVisible = true
+                headerType.preference.isVisible = true
             }
 
             "http" -> {
@@ -182,6 +241,14 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
                 path.preference.setTitle(R.string.http_upgrade_path)
                 host.preference.isVisible = true
                 path.preference.isVisible = true
+            }
+
+            "xhttp" -> {
+                host.preference.setTitle(R.string.xhttp_host)
+                path.preference.setTitle(R.string.xhttp_path)
+                host.preference.isVisible = true
+                path.preference.isVisible = true
+                xhttpCategory.isVisible = true
             }
         }
     }

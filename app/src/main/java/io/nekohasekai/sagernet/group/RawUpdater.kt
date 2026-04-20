@@ -2,6 +2,7 @@ package io.nekohasekai.sagernet.group
 
 import android.annotation.SuppressLint
 import io.nekohasekai.sagernet.R
+import io.nekohasekai.sagernet.SubscriptionFilterMode
 import io.nekohasekai.sagernet.database.*
 import io.nekohasekai.sagernet.fmt.AbstractBean
 import io.nekohasekai.sagernet.fmt.http.HttpBean
@@ -9,6 +10,8 @@ import io.nekohasekai.sagernet.fmt.hysteria.HysteriaBean
 import io.nekohasekai.sagernet.fmt.hysteria.parseHysteria1Json
 import io.nekohasekai.sagernet.fmt.shadowsocks.ShadowsocksBean
 import io.nekohasekai.sagernet.fmt.shadowsocks.parseShadowsocks
+import io.nekohasekai.sagernet.fmt.shadowsocksr.ShadowsocksRBean
+import io.nekohasekai.sagernet.fmt.shadowsocksr.parseShadowsocksR
 import io.nekohasekai.sagernet.fmt.socks.SOCKSBean
 import io.nekohasekai.sagernet.fmt.trojan.TrojanBean
 import io.nekohasekai.sagernet.fmt.trojan_go.parseTrojanGo
@@ -103,6 +106,18 @@ object RawUpdater : GroupUpdater() {
         proxies = proxiesMap.values.toList()
 
         if (subscription.forceResolve) forceResolve(proxies, proxyGroup.id)
+
+        val filterMode = subscription.filterMode ?: SubscriptionFilterMode.DISABLED
+        val filterRegex = subscription.filterRegex ?: ""
+        if (filterMode != SubscriptionFilterMode.DISABLED && filterRegex.isNotBlank()) {
+            val regex = filterRegex.toRegex()
+            proxies = when (filterMode) {
+                SubscriptionFilterMode.INCLUDE -> proxies.filter { regex.containsMatchIn(it.displayName()) }
+                SubscriptionFilterMode.EXCLUDE -> proxies.filterNot { regex.containsMatchIn(it.displayName()) }
+                else -> proxies
+            }
+            Logs.d("After filter (mode=$filterMode): ${proxies.size}")
+        }
 
         val exists = SagerDatabase.proxyDao.getByGroup(proxyGroup.id)
         val duplicate = ArrayList<String>()
@@ -301,6 +316,25 @@ object RawUpdater : GroupUpdater() {
                                 method = clashCipher(proxy["cipher"] as String)
                                 plugin = ssPlugin.joinToString(";")
                                 name = proxy["name"]?.toString()
+                            })
+                        }
+
+                        "ssr" -> {
+                            proxies.add(ShadowsocksRBean().apply {
+                                for (opt in proxy) {
+                                    if (opt.value == null) continue
+                                    when (opt.key) {
+                                        "name" -> name = opt.value.toString()
+                                        "server" -> serverAddress = opt.value as String
+                                        "port" -> serverPort = opt.value.toString().toInt()
+                                        "cipher" -> method = clashCipher(opt.value as String)
+                                        "password" -> password = opt.value.toString()
+                                        "obfs" -> obfs = opt.value as String
+                                        "protocol" -> protocol = opt.value as String
+                                        "obfs-param" -> obfsParam = opt.value.toString()
+                                        "protocol-param" -> protocolParam = opt.value.toString()
+                                    }
+                                }
                             })
                         }
 
@@ -510,6 +544,67 @@ object RawUpdater : GroupUpdater() {
                                     "alpn" -> {
                                         val alpn = (opt.value as? (List<String>))
                                         bean.alpn = alpn?.joinToString("\n")
+                                    }
+                                    "reality-pub-key", "public-key" -> bean.realityPubKey =
+                                        opt.value.toString()
+                                    "reality-short-id", "short-id" -> bean.realityShortId =
+                                        opt.value.toString()
+                                }
+                            }
+                            proxies.add(bean)
+                        }
+
+                        "wireguard" -> {
+                            val peers = proxy["peers"] as? List<Map<String, Any?>>
+                            val configToUse = peers?.firstOrNull() ?: proxy
+
+                            val bean = WireGuardBean().apply {
+                                name = proxy["name"].toString()
+
+                                for ((key, value) in configToUse) {
+                                    when (key.replace("_", "-")) {
+                                        "server" -> serverAddress = value.toString()
+                                        "port" -> serverPort = value.toString().toIntOrNull() ?: 0
+                                        "mtu" -> mtu = value.toString().toIntOrNull() ?: 0
+                                        "ip" -> {
+                                            val ipValue = value.toString()
+                                            localAddress = if (!ipValue.contains("/")) {
+                                                "$ipValue/32"
+                                            } else {
+                                                ipValue
+                                            }
+                                        }
+                                        "ipv6" -> {
+                                            val ipv6Value = value.toString()
+                                            val processedIPv6Value = if (!ipv6Value.contains("/")) {
+                                                "$ipv6Value/128"
+                                            } else {
+                                                ipv6Value
+                                            }
+                                            if (localAddress.isNullOrEmpty()) {
+                                                localAddress = processedIPv6Value
+                                            } else {
+                                                localAddress += "\n$processedIPv6Value"
+                                            }
+                                        }
+                                        "private-key" -> privateKey = value.toString()
+                                        "public-key" -> peerPublicKey = value.toString()
+                                        "pre-shared-key", "preshared-key" -> peerPreSharedKey = value.toString()
+                                        "reserved" -> {
+                                            val reservedValue = value
+                                            when (reservedValue) {
+                                                is List<*> -> {
+                                                    if (reservedValue.size == 1) {
+                                                        reserved = reservedValue[0].toString().replace("[\\[\\] ]".toRegex(), "")
+                                                    } else {
+                                                        reserved = reservedValue.joinToString("\n") { it.toString() }
+                                                    }
+                                                }
+                                                else -> {
+                                                    reserved = reservedValue.toString().replace("[\\[\\] ]".toRegex(), "")
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -755,6 +850,10 @@ object RawUpdater : GroupUpdater() {
             when {
                 json.has("server") && (json.has("up") || json.has("up_mbps")) -> {
                     return listOf(json.parseHysteria1Json())
+                }
+
+                json.has("method") && json.has("obfs") && json.has("protocol") -> {
+                    return listOf(json.parseShadowsocksR())
                 }
 
                 json.has("method") -> {

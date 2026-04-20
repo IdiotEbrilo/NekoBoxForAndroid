@@ -97,6 +97,10 @@ object ProfileManager {
         }
     }
 
+    suspend fun updateTraffic(profileId: Long, rx: Long, tx: Long) {
+        SagerDatabase.proxyDao.updateTraffic(profileId, rx, tx)
+    }
+
     suspend fun deleteProfile2(groupId: Long, profileId: Long) {
         if (SagerDatabase.proxyDao.deleteById(profileId) == 0) return
         if (DataStore.selectedProxy == profileId) {
@@ -213,7 +217,7 @@ object ProfileManager {
                 if (country == "cn") createRule(
                     RuleEntity(
                         name = app.getString(R.string.route_play_store, displayCountry),
-                        domains = "googleapis.cn",
+                        domains = "domain:googleapis.cn\ndomain:xn--ngstr-lra8j.com\ndomain:xn--ngstr-cn-8za9o.com",
                     ), false
                 )
                 createRule(
